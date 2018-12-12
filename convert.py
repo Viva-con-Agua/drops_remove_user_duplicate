@@ -31,6 +31,8 @@ class Converter:
     }
     
     def __init__(self): 
+
+        #change access data for connection pool1 database
         self.mydb = mysql.connector.connect(
             host="172.2.111.111",
             user="pool",

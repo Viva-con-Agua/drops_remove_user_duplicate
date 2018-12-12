@@ -6,6 +6,8 @@ class Migration:
     
     def __init__(self):
         self.auth = {'client_id': 'migration', 'client_secret': 'migration', 'version': '1.1.0'}
+
+        # change host to the internel drops ip
         self.url = [
             "http://localhost:9000/drops/rest/crew/create",
             "http://localhost:9000/drops/rest/user/create",
