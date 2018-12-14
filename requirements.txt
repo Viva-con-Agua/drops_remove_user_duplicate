@@ -1,2 +1,3 @@
 requests
-mysql-connector
+yaml-1.3
+json

@@ -11,7 +11,18 @@ class Converter:
     CityOrder = ('name', 'country')
     
     #Models for jsons
-    UserModel = {
+    
+    Model = {
+        'uuid': '',
+        'model': ''
+    }
+    
+    UUID = {
+        'uuid': '',
+        'id': ''
+    }
+
+    User = {
         'email': '',
         'firstName': '',
         'lastName': '',
@@ -20,7 +31,8 @@ class Converter:
         'birthday': 0,
         'sex': ''
     }
-    CrewModel = {
+
+    Crew = {
         "name": "",
         "cities": [
         ]
@@ -29,27 +41,42 @@ class Converter:
         'name': '',
         'country': ''
     }
-    
-    def __init__(self): 
 
-        #change access data for connection pool1 database
+    UserCrew = {
+        'user': '',
+        'crew': ''
+    }
+
+    
+    def __init__(self, config): 
+
+        # change access data for pool1 access
+        self.config = config
         self.mydb = mysql.connector.connect(
-            host="172.2.111.111",
-            user="pool",
-            passwd="pool",
-            database="pool"
+            host=self.config['mysql']['host'],
+            user=self.config['mysql']['user'],
+            passwd=self.config['mysql']['passwd'],
+            database=self.config['mysql']['database']
         )
         # required sql strings
-        self.mysqlString = [
+        
+        self.crewMysqlString = [
             "SELECT user_id FROM vca1312_usermeta WHERE meta_key=%s && meta_value=%s",
             "SELECT meta_key, meta_value FROM vca1312_usermeta WHERE user_id=%s && (meta_key='last_name' ||  meta_key='nickname' \
-            || meta_key='nation')",
+            || meta_key='nation' || meta_key='city')",
+            "SELECT name, id FROM vca1312_vca_asm_geography WHERE ID=%s"
+        ]
+
+        self.userMysqlString = [
             "SELECT ID FROM vca1312_users",
-            "SELECT meta_key, meta_value FROM vca1312_usermeta WHERE user_id=%s && \
-            (meta_key='first_name' || meta_key='last_name' || meta_key='mobile' || \
-            meta_key='residence' || meta_key='birthday' || meta_key='gender')",
-            "SELECT user_email FROM vca1312_users WHERE ID=%s",
-            "SELECT name FROM vca1312_vca_asm_geography WHERE ID=%s"
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='first_name'", 
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='last_name'", 
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='mobile'",
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='residence'",
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='birthday'", 
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='gender'", 
+            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='city'",
+            "SELECT user_email FROM vca1312_users WHERE ID=%s"
         ]
         
 
@@ -57,7 +84,7 @@ class Converter:
         crewIdList = []
         sqlCursor = self.mydb.cursor()
         sqlAtt = ("vca1312_capabilities", 'a:1:{s:4:"city";b:1;}')
-        sqlCursor.execute(self.mysqlString[0], sqlAtt)
+        sqlCursor.execute(self.crewMysqlString[0], sqlAtt)
         for x in sqlCursor:
             crewIdList.append(x)
         return crewIdList
@@ -71,10 +98,13 @@ class Converter:
         for x in crewIdList:
             current = current + 1
             print("Build Crew Json from Database: ", int(current / finish), "%", end="\r", flush=True)
-            sqlcursor.execute(self.mysqlString[1], x)
-            crew = copy.deepcopy(self.CrewModel)
-            city = copy.copy(self.City)
+            sqlcursor.execute(self.crewMysqlString[1], x)
+            crew = copy.deepcopy(self.Crew)
+            city = copy.deepcopy(self.City)
+            uuid = copy.deepcopy(self.UUID)
+            model = copy.deepcopy(self.Model)
             country = 0
+            id = 0
             for x in sqlcursor:
                 if x[0] == 'last_name':
                     city['name'] = x[1]
@@ -82,11 +112,18 @@ class Converter:
                     crew['name'] = x[1]
                 elif x[0] == 'nation':
                     country = x[1]
-            sqlcursor.execute(self.mysqlString[5], (country,))
+                elif x[0] == 'city':
+                    id = x[1]
+            sqlcursor.execute(self.crewMysqlString[2], (country,))
+            uuid['id']=id
             for x in sqlcursor:
                 city['country'] = x[0]
             crew['cities'].append(self.ordered(city, self.CityOrder))
-            crewList.append(json.dumps(self.ordered(crew, self.CrewOrder)))
+            model['uuid'] = uuid
+            model['model'] = json.dumps(self.ordered(crew, self.CrewOrder))
+            crewList.append(model)
+
+            
         print("\n")
         return crewList
     
@@ -94,7 +131,7 @@ class Converter:
         sqlCursor = self.mydb.cursor()
         userIdList = []
         crewIdList = self.crew_id_list()
-        sqlCursor.execute(self.mysqlString[2])
+        sqlCursor.execute(self.userMysqlString[0])
         for x in sqlCursor:
             if x in crewIdList:
                 continue
@@ -107,38 +144,75 @@ class Converter:
         return OrderedDict([(key, d[key]) for key in desired_key_order])
 
     def userConverter(self):
+        testcount = 120
+
         sqlCursor = self.mydb.cursor()
         userIdList = self.user_id_list()
         userList = []
         finish = len(userIdList) / 100
         current = 0
         for y in userIdList:
+            testcount = testcount - 1
             current = current + 1
-            print("Build User Json from Database: ", int(current / finish), "%", end="\r", flush=True)
-            sqlCursor.execute(self.mysqlString[3], y)
-            user = copy.deepcopy(self.UserModel)
+            user = copy.deepcopy(self.User)
+            uuid = copy.deepcopy(self.UUID)
+            model = copy.deepcopy(self.Model)
+            print("Build User Json from Database: ", int(current / finish), "%", y, end="\r", flush=True)
+            
+            sqlCursor.execute(self.userMysqlString[1], y)
             for x in sqlCursor:
-                if x[0] == 'first_name':
-                    user['firstName'] = x[1]
-                elif x[0] == 'last_name':
-                    user['lastName'] = x[1]
-                elif x[0] == 'mobile':
-                    user['mobilePhone'] = x[1]
-                elif x[0] == 'residence':
-                    user['placeOfResidence'] = x[1]
-                elif x[0] == 'birthday':
-                    if x[1] != '':
-                        user['birthday'] = int(x[1])
-                elif x[0] == 'gender':
-                    user['sex'] = x[1]
-            sqlCursor.execute(self.mysqlString[4], y)
+                user['firstName'] = x[0]
+            sqlCursor.execute(self.userMysqlString[2], y)
+            for x in sqlCursor:
+                user['lastName'] = x[0]
+            sqlCursor.execute(self.userMysqlString[3], y)
+            for x in sqlCursor:
+                user['mobilePhone'] = x[0]
+            sqlCursor.execute(self.userMysqlString[4], y)
+            for x in sqlCursor:
+                user['placeOfResidence'] = x[0]
+            sqlCursor.execute(self.userMysqlString[5], y)
+            for x in sqlCursor:
+                if x[0] != '':
+                    user['birthday'] = int(x[0])
+            sqlCursor.execute(self.userMysqlString[6], y)
+            for x in sqlCursor:
+                user['sex'] = x[0]
+            sqlCursor.execute(self.userMysqlString[7], y)
+            for x in sqlCursor:
+                id = x[0] 
+            sqlCursor.execute(self.userMysqlString[8], y)
+            uuid['id']=id
             for z in sqlCursor:
                 user['email'] = z[0]
-            result = self.ordered(user, self.UserOrder)
-            userList.append(json.dumps(user))
+            #result = self.ordered(user, self.UserOrder)
+            model['uuid'] = uuid
+            model['model'] = json.dumps(user)
+            userList.append(model)
+            if testcount == 0:
+                break
         print("\n")
         return userList
 
+    def buildUserCrewList(self, userList, crewList):
+        userCrewList = []
+        finish = len(userList) / 100
+        current = 0
+        for x in userList:
+            current = current + 1
+            print("Build User Json from Database: ", int(current / finish), "%", end="\r", flush=True)
+            crewUser = copy.deepcopy(self.UserCrew)
+            if x['id'] != 0:
+                for y in crewList:
+                    if y['id'] == x['id']:
+                        crewUser['user'] = x['uuid']
+                        crewUser['crew'] = y['uuid']
+                        userCrewList.append(crewUser)
+                    else:
+                        continue
+            else:
+                continue
+        return userCrewList
 
 
 
