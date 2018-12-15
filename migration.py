@@ -24,11 +24,14 @@ class Migration:
             print("Insert Crews: ", int(current / finish), "%", end="\r", flush=True)
             headers = { 'Content-Type': 'application/json' }
             r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['model'])
-            if r.status_code != 200:
-                print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
-            elif r.status_code == 200:
+            if r.status_code == 200:
                 body = json.loads(r.text)
                 x['uuid']['uuid'] = body['id']
+            elif r.status_code == 201:
+                body = json.loads(r.text)
+                x['uuid']['uuid'] = body['id']
+            else:
+                print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
             uuidList.append(x['uuid'])
         print("\n")
         return uuidList
@@ -49,11 +52,15 @@ class Migration:
             }
             headers = { 'Content-Type': 'application/json' }
             r = requests.post(self.url[1], headers=headers, params=self.auth, data=x['model'])
-            if r.status_code != 200:
-                print("status_code: ", r.status_code, "status_msg: ", r.text, "user: ", x['model'])
-            elif r.status_code == 200:
+            if r.status_code == 200:
                 body = json.loads(r.text)
                 x['uuid']['uuid'] = body['id']
+            elif r.status_code == 201:
+                body = json.loads(r.text)
+                x['uuid']['uuid'] = body['id']
+            else:
+                print("status_code: ", r.status_code, "status_msg: ", r.text, "user: ", x['model'])
+            
             uuidList.append(x['uuid'])
             r = requests.post(self.url[2], headers=headers, params=self.auth, data=json.dumps(pool1User))
             if r.status_code != 200:
