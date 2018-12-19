@@ -63,29 +63,29 @@ class Converter:
             data = json.load(f)
         self.pillar = data
         self.crewMysqlString = [
-            "SELECT user_id FROM vca1312_usermeta WHERE meta_key=%s && meta_value=%s",
-            "SELECT meta_key, meta_value FROM vca1312_usermeta WHERE user_id=%s && (meta_key='last_name' ||  meta_key='nickname' \
+            "SELECT user_id FROM wp_usermeta WHERE meta_key=%s && meta_value=%s",
+            "SELECT meta_key, meta_value FROM wp_usermeta WHERE user_id=%s && (meta_key='last_name' ||  meta_key='nickname' \
             || meta_key='nation' || meta_key='city')",
-            "SELECT name, id FROM vca1312_vca_asm_geography WHERE ID=%s"
+            "SELECT name, id FROM wp_vca_asm_geography WHERE ID=%s"
         ]
 
         self.userMysqlString = [
-            "SELECT ID FROM vca1312_users",
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='first_name'", 
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='last_name'", 
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='mobile'",
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='residence'",
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='birthday'", 
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='gender'", 
-            "SELECT meta_value FROM vca1312_usermeta WHERE user_id=%s && meta_key='city'",
-            "SELECT user_email FROM vca1312_users WHERE ID=%s"
+            "SELECT ID FROM wp_users",
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='first_name'", 
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='last_name'", 
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='mobile'",
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='residence'",
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='birthday'", 
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='gender'", 
+            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='city'",
+            "SELECT user_email FROM wp_users WHERE ID=%s"
         ]
         
 
     def crew_id_list(self):
         crewIdList = []
         sqlCursor = self.mydb.cursor()
-        sqlAtt = ("vca1312_capabilities", 'a:1:{s:4:"city";b:1;}')
+        sqlAtt = ("wp_capabilities", 'a:1:{s:4:"city";b:1;}')
         sqlCursor.execute(self.crewMysqlString[0], sqlAtt)
         for x in sqlCursor:
             crewIdList.append(x)
@@ -146,7 +146,7 @@ class Converter:
         return OrderedDict([(key, d[key]) for key in desired_key_order])
 
     def userConverter(self):
-        testcount = 800
+        #testcount = 800
 
         sqlCursor = self.mydb.cursor()
         userIdList = self.user_id_list()
@@ -154,7 +154,7 @@ class Converter:
         finish = len(userIdList) / 100
         current = 0
         for y in userIdList:
-            testcount = testcount - 1
+           # testcount = testcount - 1
             current = current + 1
             user = copy.deepcopy(self.User)
             uuid = copy.deepcopy(self.UUID)
@@ -191,8 +191,8 @@ class Converter:
             model['uuid'] = uuid
             model['model'] = json.dumps(user)
             userList.append(model)
-            if testcount == 0:
-                break
+           # if testcount == 0:
+            #    break
         print("\n")
         return userList
 

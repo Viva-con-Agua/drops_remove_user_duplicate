@@ -11,10 +11,10 @@ class Migration:
         self.pillar = data
         # edit the host to internel drops ip
         self.url = [
-            "http://localhost:9000/drops/rest/crew/create",
-            "http://localhost:9000/drops/rest/user/create",
-            "http://localhost:9000/drops/rest/pool1user/create",
-            "http://localhost:9000/drops/rest/user/crew"
+            "http://172.2.0.3:9000/drops/rest/crew/create",
+            "http://172.2.0.3:9000/drops/rest/user/create",
+            "http://172.2.0.3:9000/drops/rest/pool1user/create",
+            "http://172.2.0.3:9000/drops/rest/user/crew"
         ]
     
     def handleCrew(self, crewList):
@@ -29,9 +29,11 @@ class Migration:
             if r.status_code == 200:
                 body = json.loads(r.text)
                 x['uuid']['uuid'] = body['id']
+                print(r.text)
             elif r.status_code == 201:
                 body = json.loads(r.text)
                 x['uuid']['uuid'] = body['id']
+                print(r.text)
             else:
                 print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
             uuidList.append(x['uuid'])
@@ -81,12 +83,12 @@ class Migration:
     def handleUserCrew(self, list):
         for x in list:
             if 'pillar' in x:
-                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] + "/" + "?" + x['pillar']
+                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] + "?pillar=" + x['pillar']
                 print(url)
                 r = requests.post(url, params=self.auth)
                 print(r.status_code)
             else: 
-                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] + "/"
+                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] 
                 print(url)
                 r = requests.post(url, params=self.auth)
                 print(r.status_code)

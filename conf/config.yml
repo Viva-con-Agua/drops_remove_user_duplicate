@@ -1,7 +1,7 @@
 connection:
     drops: http://172.2.0.3
 mysql:
-    host: 172.2.111.111
-    user: pool
-    passwd: pool
-    database: pool
+    host: 172.2.1.10
+    user: root
+    passwd: root
+    database: db175370026 
