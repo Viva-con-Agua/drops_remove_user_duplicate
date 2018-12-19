@@ -59,7 +59,9 @@ class Converter:
             database=self.config['mysql']['database']
         )
         # required sql strings
-        
+        with open('conf/asp.json') as f:
+            data = json.load(f)
+        self.pillar = data
         self.crewMysqlString = [
             "SELECT user_id FROM vca1312_usermeta WHERE meta_key=%s && meta_value=%s",
             "SELECT meta_key, meta_value FROM vca1312_usermeta WHERE user_id=%s && (meta_key='last_name' ||  meta_key='nickname' \
@@ -144,7 +146,7 @@ class Converter:
         return OrderedDict([(key, d[key]) for key in desired_key_order])
 
     def userConverter(self):
-        testcount = 120
+        testcount = 800
 
         sqlCursor = self.mydb.cursor()
         userIdList = self.user_id_list()
@@ -207,6 +209,9 @@ class Converter:
                     if y['id'] == x['id']:
                         crewUser['user'] = x['uuid']
                         crewUser['crew'] = y['uuid']
+                        if 'pillar' in x:
+                            crewUser['pillar']=x['pillar']
+
                         userCrewList.append(crewUser)
                     else:
                         continue

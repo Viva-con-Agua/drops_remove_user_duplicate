@@ -6,7 +6,9 @@ class Migration:
     
     def __init__(self):
         self.auth = {'client_id': 'migration', 'client_secret': 'migration', 'version': '1.1.0'}
-
+        with open('conf/asp.json') as f:
+            data = json.load(f)
+        self.pillar = data
         # edit the host to internel drops ip
         self.url = [
             "http://localhost:9000/drops/rest/crew/create",
@@ -50,6 +52,13 @@ class Migration:
                 "email": userDict['email'],
                 "confirmed": False
             }
+            for p in self.pillar:
+                if p['email'] == userDict['email']:
+                    x['uuid']['pillar'] = p['pillar']
+                    break
+                else:
+                    continue
+
             headers = { 'Content-Type': 'application/json' }
             r = requests.post(self.url[1], headers=headers, params=self.auth, data=x['model'])
             if r.status_code == 200:
@@ -71,8 +80,15 @@ class Migration:
 
     def handleUserCrew(self, list):
         for x in list:
-            url = self.url[3] + "/" + x['user'] + "/" + x['crew']
-            print(url)
-            r = requests.post(url, params=self.auth)
-            print(r.status_code)
+            if 'pillar' in x:
+                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] + "/" + "?" + x['pillar']
+                print(url)
+                r = requests.post(url, params=self.auth)
+                print(r.status_code)
+            else: 
+                url = self.url[3] + "/" + x['user'] + "/" + x['crew'] + "/"
+                print(url)
+                r = requests.post(url, params=self.auth)
+                print(r.status_code)
+
 
