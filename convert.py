@@ -124,7 +124,7 @@ class Converter:
     def crew_data(self):
         crewIdList = []
         sqlCursor = self.mydb.cursor()
-        sqlCursor.execute(self.crewMysqlString[0])
+        sqlCursor.execute(self.transactionMysqlString[1])
         for x in sqlCursor:
             crewIdList[x[1]].append({ 'drops_id': x[0], 'name': x[2] })
         return crewIdList
@@ -136,7 +136,6 @@ class Converter:
         #testcount = 800
 
         sqlCursor = self.mydb.cursor()
-
 
         crewIdList = self.crew_data()
 
