@@ -165,7 +165,7 @@ class Converter:
             crew['uuid'] = crewIdList[y[0]]['drops_id']
 
             # Set partner Data WHEN cash is 0
-            if y[7] == '0'
+            if y[7] == 0:
                 partner['name'] = y[5]
 
             sourceAmount['amount'] = y[1]
@@ -173,19 +173,19 @@ class Converter:
             # Set Source
             source['amount'] = sourceAmount
 
-            if y[2] == 'donations'
+            if y[2] == 'donations':
                 source['category'] = 'other'
                 source['norms'] = 'DONATION'
-            else
+            else:
                 source['category'] = 'other_ec'
                 source['norms'] = 'ECONOMIC'
 
             source['description'] = y[6]
 
             # Set source type depending on cash
-            if y[7] == '0'
+            if y[7] == 0:
                 source['typeOfSource']['category'] = 'extern'
-            else
+            else:
                 source['typeOfSource']['category'] = 'cash'
 
             # Set amount
