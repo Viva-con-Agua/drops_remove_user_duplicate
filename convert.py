@@ -254,8 +254,10 @@ class Converter:
             # Set model
 
             model['taking'] = amount
-            model['deposit'] = deposit
-            model['depositConfirmation'] = depositConfirmation
+
+            if int(y[8]) < 1577836800:
+                model['deposit'] = deposit
+                model['depositConfirmation'] = depositConfirmation
 
             transactionList.append(model)
            # if testcount == 0:

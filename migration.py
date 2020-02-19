@@ -34,21 +34,22 @@ class Migration:
                 x['deposit']['amount'][0]['takingId'] = body['id']
                 print(r.text)
 
-                rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['deposit'])
-                if rD.status_code == 201:
-                    body = json.loads(rD.text)
-                    x['depositConfirmation'] = body['id']
-                    print(rD.text)
+                if x['deposit'] != "":
+                    rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['deposit'])
+                    if rD.status_code == 200:
+                        body = json.loads(rD.text)
+                        x['depositConfirmation'] = body['id']
+                        print(rD.text)
 
-                    rDc = requests.post(self.url[2], headers=headers, params=self.auth, data=x['depositConfirmation'])
-                    if rDc.status_code == 200:
-                        body = json.loads(rDc.text)
-                        print(rDc.text)
+                        rDc = requests.post(self.url[2], headers=headers, params=self.auth, data=x['depositConfirmation'])
+                        if rDc.status_code == 200:
+                            body = json.loads(rDc.text)
+                            print(rDc.text)
+                        else:
+                            print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x)
+
                     else:
-                        print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x)
-
-                else:
-                    print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x)
+                        print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x)
 
             else:
                 print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
