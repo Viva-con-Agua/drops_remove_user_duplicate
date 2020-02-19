@@ -26,34 +26,30 @@ class Migration:
             headers = { 'Content-Type': 'application/json' }
 
             # TODO Add taking
-            r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['model']['taking'])
-            if r.status_code == 200:
+            r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['taking'])
+            if r.status_code == 201:
                 # TODO Add deposit
                 body = json.loads(r.text)
 
-                x['model']['deposit']['amount'][0]['takingId'] = body['id']
+                x['deposit']['amount'][0]['takingId'] = body['id']
                 print(r.text)
 
-                rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['model']['deposit'])
-                if rD.status_code == 200:
+                rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['deposit'])
+                if rD.status_code == 201:
                     body = json.loads(rD.text)
-                    x['model']['depositConfirmation'] = body['id']
+                    x['depositConfirmation'] = body['id']
                     print(rD.text)
 
-                    rDc = requests.post(self.url[2], headers=headers, params=self.auth, data=x['model']['depositConfirmation'])
+                    rDc = requests.post(self.url[2], headers=headers, params=self.auth, data=x['depositConfirmation'])
                     if rDc.status_code == 200:
                         body = json.loads(rDc.text)
                         print(rDc.text)
                     else:
-                        print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['model'])
+                        print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x)
 
                 else:
-                    print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['model'])
+                    print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x)
 
-            elif r.status_code == 201:
-                body = json.loads(r.text)
-                x['uuid']['uuid'] = body['id']
-                print(r.text)
             else:
                 print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
             uuidList.append(x['uuid'])

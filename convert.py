@@ -17,12 +17,7 @@ class Converter:
     # Transaction models
     
     Amount = {
-        'involvedSupporter': {
-            'name': 'Tobias Kästle',
-            'uuid': '58c8e525-8d50-41ab-9725-d318891c92db'
-        },
-        'received': '', # transaction_date * 1000
-        'sources': [],
+        'amount': '',
         'author': '58c8e525-8d50-41ab-9725-d318891c92db',
         'comment': 'Migration from Pool1',
         'context': {
@@ -58,6 +53,15 @@ class Converter:
     Crew = {
         "name": "", # name
         "uuid": "" # handled drops_id
+    }
+
+    TakingAmount = {
+        'involvedSupporter': [{
+            'name': 'Tobias Kästle',
+            'uuid': '58c8e525-8d50-41ab-9725-d318891c92db'
+        }],
+        'received': '', # transaction_date * 1000
+        'sources': []
     }
 
     SourceAmount = {
@@ -126,7 +130,7 @@ class Converter:
         sqlCursor = self.mydb.cursor()
         sqlCursor.execute(self.transactionMysqlString[1])
         for x in sqlCursor:
-            crewIdList[x[1]] = { 'drops_id': x[0], 'name': x[2] }
+            crewIdList[x[1]] = { 'drops_id': uuid.UUID(x[0]), 'name': x[2] }
         return crewIdList
 
     def ordered(self, d, desired_key_order):
@@ -154,6 +158,7 @@ class Converter:
             model = copy.deepcopy(self.Model)
             amount = copy.deepcopy(self.Amount)
             source = copy.deepcopy(self.Source)
+            takingAmount = copy.deepcopy(self.TakingAmount)
             sourceAmount = copy.deepcopy(self.SourceAmount)
             crew = copy.deepcopy(self.Crew)
             partner = copy.deepcopy(self.Partner)
@@ -170,7 +175,7 @@ class Converter:
             if y[7] == 0:
                 partner['name'] = y[5]
 
-            sourceAmount['amount'] = y[1]
+            sourceAmount['amount'] = y[1] / 100
 
             # Set Source
             source['amount'] = sourceAmount
@@ -190,10 +195,11 @@ class Converter:
             else:
                 source['typeOfSource']['category'] = 'cash'
 
-            # Set amount
-            amount['received'] = int(y[3]) * 1000
-            amount['sources'].append(source)
+            # Set taking amount
+            takingAmount['received'] = int(y[3]) * 1000
+            takingAmount['sources'].append(source)
 
+            # Set amount
             amount['created'] = int(y[8]) * 1000
             amount['updated'] = int(y[8]) * 1000
 
@@ -202,7 +208,7 @@ class Converter:
             amount['details']['description'] = y[4]
 
             amount['details']['partner'] = partner
-            amount['details']['reasonForPayment'] = crew['name'][:3] + ' ' + y[4]         
+            amount['details']['reasonForPayment'] = crew['name'][:3].upper() + ' - ' + y[4].upper()         
 
             # TODO Set deposit
 
@@ -222,7 +228,7 @@ class Converter:
 
             # TODO Set depositConfirmation
 
-            depositConfirmation['created'] = int(y[8]) * 1000
+            depositConfirmation['date'] = int(y[8]) * 1000
 
             # Set model
 
