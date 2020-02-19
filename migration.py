@@ -27,7 +27,7 @@ class Migration:
 
             # TODO Add taking
             r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['taking'])
-            if r.status_code == 201:
+            if r.status_code == 200:
                 # TODO Add deposit
                 body = json.loads(r.text)
 

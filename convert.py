@@ -200,6 +200,8 @@ class Converter:
             takingAmount['received'] = int(y[3]) * 1000
             takingAmount['sources'].append(source)
 
+            amount['amount'] = takingAmount
+
             # Set amount
             amount['created'] = int(y[8]) * 1000
             amount['updated'] = int(y[8]) * 1000
