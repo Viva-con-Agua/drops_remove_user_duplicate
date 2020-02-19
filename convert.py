@@ -131,7 +131,7 @@ class Converter:
         sqlCursor = self.mydb.cursor()
         sqlCursor.execute(self.transactionMysqlString[1])
         for x in sqlCursor:
-            crewIdList[x[1]] = { 'drops_id': uuid.UUID(x[0]), 'name': x[2] }
+            crewIdList[x[1]] = { 'drops_id': uuid.UUID(x[0]).hex, 'name': x[2] }
         return crewIdList
 
     def ordered(self, d, desired_key_order):
