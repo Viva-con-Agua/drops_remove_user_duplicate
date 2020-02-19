@@ -126,7 +126,6 @@ class Converter:
         sqlCursor = self.mydb.cursor()
         sqlCursor.execute(self.transactionMysqlString[1])
         for x in sqlCursor:
-            print(x)
             if x[1] not in crewIdList:
                 crewIdList[x[1]] = []
             crewIdList[x[1]].append({ 'drops_id': x[0], 'name': x[2] })
@@ -141,6 +140,7 @@ class Converter:
         sqlCursor = self.mydb.cursor()
 
         crewIdList = self.crew_data()
+        print(crewIdList)
 
         # Get all transactions
         transactionIdList = self.transaction_list()
