@@ -32,7 +32,7 @@ class Converter:
         'details': {
             'partner': {}, # when cash == 0 its field
             "reasonForPayment": "", # name substr(0,3) + " - " meta_1  
-            'receipt': False
+            'receipt': 0
         },
         'updated': '' # entry_time * 1000 
     }
@@ -40,7 +40,7 @@ class Converter:
     Source = {
         "amount": "",
         "category": "", # when account_type == 'donations' its other else other_ec
-        "desc": True,
+        "desc": 1,
         "description": "", # meta_4  
         "norms": "", # # when account_type == 'donations' its DONATION else ECONOMIC
         "typeOfSource": {
