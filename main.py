@@ -4,7 +4,7 @@ from migration import Migration
 #load config file 
 def loadConfig():
     with open("conf/config.yml", 'r') as ymlfile:
-        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        cfg = yaml.load(ymlfile)
     return cfg
 
 def main():
@@ -13,14 +13,11 @@ def main():
     m = Migration()
     transactionList = c.transactionConverter()
     
-    print(transactionList)
+    #print(transactionList)
     #uuidtransactionList = m.handleTransaction(transactionList)
     #print("TransactionUUIDList done")
     #for x in uuidtransactionList:
     #    print(x)
-
-    #print(config)
-    #print(crewList)
 
 if __name__ == "__main__":
     main()

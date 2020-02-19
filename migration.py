@@ -26,13 +26,18 @@ class Migration:
             headers = { 'Content-Type': 'application/json' }
 
             # TODO Add taking
-            r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['taking'])
+            r = requests.post(self.url[0], headers=headers, params=self.auth, data=json.dumps(x['taking']))
+            print(requests.Response())
             if r.status_code == 200:
                 # TODO Add deposit
+                print(r.text)
                 body = json.loads(r.text)
+
+                uuidList.append(body['id'])
 
                 x['deposit']['amount'][0]['takingId'] = body['id']
                 print(r.text)
+                print(body['id'])
 
                 if x['deposit'] != "":
                     rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['deposit'])
@@ -46,14 +51,13 @@ class Migration:
                             body = json.loads(rDc.text)
                             print(rDc.text)
                         else:
-                            print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x)
+                            print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['taking'])
 
                     else:
-                        print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x)
+                        print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['taking'])
 
             else:
-                print("status_code: ", r.status_code, "status_msg: ", r.text, "crew: ", x['model'])
-            uuidList.append(x['uuid'])
+                print("status_code: ", r.status_code, "status_msg: ", r.text, "model: ", x['taking'])
         print("\n")
         return uuidList
     def ordered(self, d, desired_key_order):

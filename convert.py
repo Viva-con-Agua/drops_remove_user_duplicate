@@ -32,7 +32,7 @@ class Converter:
         'details': {
             'partner': {}, # when cash == 0 its field
             "reasonForPayment": "", # name substr(0,3) + " - " meta_1  
-            'receipt': 0
+            'receipt': False
         },
         'updated': '' # entry_time * 1000 
     }
@@ -40,7 +40,7 @@ class Converter:
     Source = {
         "amount": "",
         "category": "", # when account_type == 'donations' its other else other_ec
-        "desc": 1,
+        "desc": True,
         "description": "", # meta_4  
         "norms": "", # # when account_type == 'donations' its DONATION else ECONOMIC
         "typeOfSource": {
@@ -76,7 +76,7 @@ class Converter:
         "contactPerson": "",
         "email": "",
         "address": "",
-        "receipt": 0
+        "receipt": False
     }
 
     # Deposit models
@@ -123,7 +123,7 @@ class Converter:
 
         # account_type == ['donations' || 'econ'] ; meta_1 == {DESCRIPTION} ; receipt_status == [] ; cash == [0 = external | 1 = cash], meta_4 == details of source
         self.transactionMysqlString = [
-            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer') LIMIT 5",
+            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer') LIMIT 1",
             "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id"
         ]
     
@@ -152,7 +152,6 @@ class Converter:
         sqlCursor = self.mydb.cursor()
 
         crewIdList = self.crew_data()
-        print(crewIdList)
 
         # Get all transactions
         transactionIdList = self.transaction_list()
@@ -162,7 +161,6 @@ class Converter:
 
         # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
         for y in transactionIdList:
-            print (y)
 
             current = current + 1
             model = copy.deepcopy(self.Model)
@@ -189,8 +187,6 @@ class Converter:
                 partner['asp'] = ""
                 partner['email'] = ""
                 partner['address'] = ""
-
-            print(y[1])
 
             sourceAmount['amount'] = float(y[1]) / 100
 

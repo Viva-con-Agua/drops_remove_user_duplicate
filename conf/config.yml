@@ -1,7 +1,7 @@
 connection:
-    stream: 172.2.200.3
+    stream: 172.2.100.6
 mysql:
     host: 172.2.1.10
     user: root
-    passwd: root
+    passwd: 'yes'
     database: db175370026 
