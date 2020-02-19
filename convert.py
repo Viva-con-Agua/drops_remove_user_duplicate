@@ -2,6 +2,7 @@
 import mysql.connector
 import json
 import copy
+import uuid
 from collections import OrderedDict
 
 class Converter:
