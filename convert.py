@@ -177,7 +177,7 @@ class Converter:
             if y[7] == 0:
                 partner['name'] = y[5]
 
-            sourceAmount['amount'] = int(y[1]) / 100
+            sourceAmount['amount'] = float(y[1]) / 100
 
             # Set Source
             source['amount'] = sourceAmount
