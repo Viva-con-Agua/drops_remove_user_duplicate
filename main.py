@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
 import yaml
 from convert import Converter
 from migration import Migration
