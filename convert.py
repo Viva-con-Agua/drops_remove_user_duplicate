@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-1 -*-
 import mysql.connector
 import json
 import copy
@@ -72,7 +73,7 @@ class Converter:
         "crew": "", # Crew
         "dateOfDeposit": "", # entry_time * 1000
         "depositUnits": [],
-        "full": "" # SourceAmount with 0 EUR,
+        "full": "", # SourceAmount with 0 EUR,
         "supporter": {
             "name": "Tobias Kästle",
             "uuid": "58c8e525-8d50-41ab-9725-d318891c92db"
