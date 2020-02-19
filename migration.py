@@ -26,7 +26,7 @@ class Migration:
             headers = { 'Content-Type': 'application/json' }
 
             # TODO Add taking
-            r = requests.post(self.url[0], headers=headers, params=self.auth, data=x['taking'])
+            r = requests.post(self.url[0], headers=headers, params=self.auth, data=json.dumps(x['taking']))
             print(requests.Response())
             if r.status_code == 200:
                 # TODO Add deposit
