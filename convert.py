@@ -21,9 +21,10 @@ class Converter:
         'amount': '',
         'author': '58c8e525-8d50-41ab-9725-d318891c92db',
         'comment': 'Migration from Pool1',
+        "description": "", 
         'context': {
             "category": "other",
-            "description": "Migration from Pool1" # meta_1
+            "description": "" # meta_1
         },
         'created': '', # entry_time * 1000 
         'crew': [],
@@ -31,7 +32,7 @@ class Converter:
         'details': {
             'partner': {}, # when cash == 0 its field
             "reasonForPayment": "", # name substr(0,3) + " - " meta_1  
-            'receipt': 0
+            'receipt': False
         },
         'updated': '' # entry_time * 1000 
     }
@@ -39,7 +40,7 @@ class Converter:
     Source = {
         "amount": "",
         "category": "", # when account_type == 'donations' its other else other_ec
-        "desc": 1,
+        "desc": True,
         "description": "", # meta_4  
         "norms": "", # # when account_type == 'donations' its DONATION else ECONOMIC
         "typeOfSource": {
@@ -176,7 +177,7 @@ class Converter:
             if y[7] == 0:
                 partner['name'] = y[5]
 
-            sourceAmount['amount'] = y[1] / 100
+            sourceAmount['amount'] = int(y[1]) / 100
 
             # Set Source
             source['amount'] = sourceAmount
@@ -206,9 +207,9 @@ class Converter:
             amount['created'] = int(y[8]) * 1000
             amount['updated'] = int(y[8]) * 1000
 
-            amount['crew'] = crew
+            amount['context']['description'] = y[4]
 
-            amount['details']['description'] = y[4]
+            amount['crew'].append(crew)
 
             amount['details']['partner'] = partner
             amount['details']['reasonForPayment'] = crew['name'][:3].upper() + ' - ' + y[4].upper()         
