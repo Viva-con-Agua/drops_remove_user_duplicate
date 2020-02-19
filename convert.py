@@ -191,7 +191,7 @@ class Converter:
                 source['typeOfSource']['category'] = 'cash'
 
             # Set amount
-            amount['received'] = y[3] * 1000
+            amount['received'] = int(y[3]) * 1000
             amount['sources'].append(source)
 
             amount['created'] = int(y[8]) * 1000
