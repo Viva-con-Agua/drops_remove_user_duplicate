@@ -149,7 +149,6 @@ class Converter:
         # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
         for y in transactionIdList:
             print (y)
-            break
 
             current = current + 1
             model = copy.deepcopy(self.Model)
@@ -195,8 +194,8 @@ class Converter:
             amount['received'] = y[3] * 1000
             amount['sources'].append(source)
 
-            amount['created'] = y[8] * 1000
-            amount['updated'] = y[8] * 1000
+            amount['created'] = int(y[8]) * 1000
+            amount['updated'] = int(y[8]) * 1000
 
             amount['crew'] = crew
 
@@ -207,11 +206,11 @@ class Converter:
 
             # TODO Set deposit
 
-            deposit['created'] = y[8] * 1000
-            deposit['updated'] = y[8] * 1000
-            deposit['dateOfDeposit'] = y[8] * 1000
+            deposit['created'] = int(y[8]) * 1000
+            deposit['updated'] = int(y[8]) * 1000
+            deposit['dateOfDeposit'] = int(y[8]) * 1000
 
-            depositAmount['created'] = y[8] * 1000
+            depositAmount['created'] = int(y[8]) * 1000
             depositAmount['amount'] = sourceAmount
 
             deposit['amount'].append(depositAmount)
@@ -223,7 +222,7 @@ class Converter:
 
             # TODO Set depositConfirmation
 
-            depositConfirmation['created'] = y[8] * 1000
+            depositConfirmation['created'] = int(y[8]) * 1000
 
             # Set model
 
