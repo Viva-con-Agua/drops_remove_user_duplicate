@@ -162,6 +162,7 @@ class Converter:
             source = copy.deepcopy(self.Source)
             takingAmount = copy.deepcopy(self.TakingAmount)
             sourceAmount = copy.deepcopy(self.SourceAmount)
+            depositSourceAmount = copy.deepcopy(self.SourceAmount)
             crew = copy.deepcopy(self.Crew)
             partner = copy.deepcopy(self.Partner)
             deposit = copy.deepcopy(self.Deposit)
@@ -176,6 +177,8 @@ class Converter:
             # Set partner Data WHEN cash is 0
             if y[7] == 0:
                 partner['name'] = y[5]
+
+            print(y[1])
 
             sourceAmount['amount'] = float(y[1]) / 100
 
@@ -227,7 +230,7 @@ class Converter:
 
             deposit['crew'] = crew
 
-            sourceAmount['amount'] = 0
+            depositSourceAmount['amount'] = 0
             deposit['full'] = sourceAmount
 
             # TODO Set depositConfirmation
