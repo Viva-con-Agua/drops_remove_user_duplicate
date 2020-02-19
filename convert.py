@@ -4,49 +4,96 @@ import copy
 from collections import OrderedDict
 
 class Converter:
-    
-    #Ordered json file
-    UserOrder = ('email', 'firstName', 'lastName', 'mobilePhone', 'placeOfResidence', 'birthday', 'sex')
-    CrewOrder = ('name', 'cities')
-    CityOrder = ('name', 'country')
-    
-    #Models for jsons
-    
+
+    # Takings models including taking, deposit and deposit confirmation details
+
     Model = {
-        'uuid': '',
-        'model': ''
-    }
-    
-    UUID = {
-        'uuid': '',
-        'id': ''
+        'taking': '',
+        'deposit': '',
+        'depositConfirmation': ''
     }
 
-    User = {
-        'email': '',
-        'firstName': '',
-        'lastName': '',
-        'mobilePhone': '',
-        'placeOfResidence': '',
-        'birthday': 0,
-        'sex': ''
+    # Transaction models
+    
+    Amount = {
+        'involvedSupporter': {
+            'name': 'Tobias Kästle',
+            'uuid': '58c8e525-8d50-41ab-9725-d318891c92db'
+        },
+        'received': '', # transaction_date * 1000
+        'sources': [],
+        'author': '58c8e525-8d50-41ab-9725-d318891c92db',
+        'comment': 'Migration from Pool1',
+        'context': {
+            "category": "other",
+            "description": "Migration from Pool1" # meta_1
+        },
+        'created': '', # entry_time * 1000 
+        'crew': [],
+        'depositUnits': [],
+        'details': {
+            'partner': {}, # when cash == 0 its field
+            "reasonForPayment": "", # name substr(0,3) + " - " meta_1  
+            'receipt': 0
+        },
+        'updated': '' # entry_time * 1000 
+    }
+
+    Source = {
+        "amount": "",
+        "category": "", # when account_type == 'donations' its other else other_ec
+        "desc": 1,
+        "description": "", # meta_4  
+        "norms": "", # # when account_type == 'donations' its DONATION else ECONOMIC
+        "typeOfSource": {
+            "category": "" # when cash == 0 its "extern", else "cash"
+        }
+    }
+
+    Partner = {
+        # SET "name" = meta_3 # when cash == 0
     }
 
     Crew = {
-        "name": "",
-        "cities": [
-        ]
-    }
-    City = {
-        'name': '',
-        'country': ''
+        "name": "", # name
+        "uuid": "" # handled drops_id
     }
 
-    UserCrew = {
-        'user': '',
-        'crew': ''
+    SourceAmount = {
+        "amount": '', # amount / 100
+        "currency": "EUR"
     }
 
+    # Deposit models
+
+    Deposit = {
+        "amount": [], # DepositAmount
+        "created": "", # entry_time * 1000 
+        "crew": "", # Crew
+        "dateOfDeposit": "", # entry_time * 1000
+        "depositUnits": [],
+        "full": "" # SourceAmount with 0 EUR,
+        "supporter": {
+            "name": "Tobias Kästle",
+            "uuid": "58c8e525-8d50-41ab-9725-d318891c92db"
+        },
+        "updated": ""
+    }
+
+    DepositAmount = {
+        "amount": "", # SourceAmount
+        "created": "", # entry_time * 1000
+        "takingId": "" # !IMPORTANT FILL FROM THE RESPONSE OF TAKING CREATE AND ADD TAKING ID 
+    }
+
+    # Deposit confirmation models
+
+    DepositConfirmation = {
+        "date": "", # entry_time * 1000
+        "id": "", # !IMPORTANT FILL FROM THE RESPONSE OF DEPOSIT CREATE AND ADD DEPOSIT ID 
+        "name": "Tobias Kästle",
+        "uuid": "58c8e525-8d50-41ab-9725-d318891c92db"
+      }
     
     def __init__(self, config): 
 
@@ -58,167 +105,133 @@ class Converter:
             passwd=self.config['mysql']['passwd'],
             database=self.config['mysql']['database']
         )
-        # required sql strings
-        with open('conf/asp.json') as f:
-            data = json.load(f)
-        self.pillar = data
-        self.crewMysqlString = [
-            "SELECT user_id FROM wp_usermeta WHERE meta_key=%s && meta_value=%s",
-            "SELECT meta_key, meta_value FROM wp_usermeta WHERE user_id=%s && (meta_key='last_name' ||  meta_key='nickname' \
-            || meta_key='nation' || meta_key='city')",
-            "SELECT name, id FROM wp_vca_asm_geography WHERE ID=%s"
-        ]
 
-        self.userMysqlString = [
-            "SELECT ID FROM wp_users",
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='first_name'", 
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='last_name'", 
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='mobile'",
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='residence'",
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='birthday'", 
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='gender'", 
-            "SELECT meta_value FROM wp_usermeta WHERE user_id=%s && meta_key='city'",
-            "SELECT user_email FROM wp_users WHERE ID=%s"
+        # account_type == ['donations' || 'econ'] ; meta_1 == {DESCRIPTION} ; receipt_status == [] ; cash == [0 = external | 1 = cash], meta_4 == details of source
+        self.transactionMysqlString = [
+            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer')",
+            "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id"
         ]
-        
+    
+    def transaction_list(self):
+        sqlCursor = self.mydb.cursor()
+        transactionIdList = []
+        sqlCursor.execute(self.transactionMysqlString[0])
+        for x in sqlCursor:
+            transactionIdList.append(x)
+        return transactionIdList
 
-    def crew_id_list(self):
+    def crew_data(self):
         crewIdList = []
         sqlCursor = self.mydb.cursor()
-        sqlAtt = ("wp_capabilities", 'a:1:{s:4:"city";b:1;}')
-        sqlCursor.execute(self.crewMysqlString[0], sqlAtt)
+        sqlCursor.execute(self.crewMysqlString[0])
         for x in sqlCursor:
-            crewIdList.append(x)
+            crewIdList[x[1]].append({ 'drops_id': x[0], 'name': x[2] })
         return crewIdList
-
-    def crewConverter(self):
-        sqlcursor = self.mydb.cursor()
-        crewIdList = self.crew_id_list()
-        crewList = []
-        finish = len(crewIdList) / 100
-        current = 0
-        for x in crewIdList:
-            current = current + 1
-            print("Build Crew Json from Database: ", int(current / finish), "%", end="\r", flush=True)
-            sqlcursor.execute(self.crewMysqlString[1], x)
-            crew = copy.deepcopy(self.Crew)
-            city = copy.deepcopy(self.City)
-            uuid = copy.deepcopy(self.UUID)
-            model = copy.deepcopy(self.Model)
-            country = 0
-            id = 0
-            for x in sqlcursor:
-                if x[0] == 'last_name':
-                    city['name'] = x[1]
-                elif x[0] == 'nickname':
-                    crew['name'] = x[1]
-                elif x[0] == 'nation':
-                    country = x[1]
-                elif x[0] == 'city':
-                    id = x[1]
-            sqlcursor.execute(self.crewMysqlString[2], (country,))
-            uuid['id']=id
-            for x in sqlcursor:
-                city['country'] = x[0]
-            crew['cities'].append(self.ordered(city, self.CityOrder))
-            model['uuid'] = uuid
-            model['model'] = json.dumps(self.ordered(crew, self.CrewOrder))
-            crewList.append(model)
-
-            
-        print("\n")
-        return crewList
-    
-    def user_id_list(self):
-        sqlCursor = self.mydb.cursor()
-        userIdList = []
-        crewIdList = self.crew_id_list()
-        sqlCursor.execute(self.userMysqlString[0])
-        for x in sqlCursor:
-            if x in crewIdList:
-                continue
-            else:
-                userIdList.append(x)
-        return userIdList        
-
 
     def ordered(self, d, desired_key_order):
         return OrderedDict([(key, d[key]) for key in desired_key_order])
 
-    def userConverter(self):
+    def transactionConverter(self):
         #testcount = 800
 
         sqlCursor = self.mydb.cursor()
-        userIdList = self.user_id_list()
-        userList = []
-        finish = len(userIdList) / 100
+
+
+        crewIdList = self.crew_data()
+
+        # Get all transactions
+        transactionIdList = self.transaction_list()
+        transactionList = []
+        finish = len(transactionIdList) / 100
         current = 0
-        for y in userIdList:
-           # testcount = testcount - 1
+
+        # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
+        for y in transactionIdList:
             current = current + 1
-            user = copy.deepcopy(self.User)
-            uuid = copy.deepcopy(self.UUID)
             model = copy.deepcopy(self.Model)
-            print("Build User Json from Database: ", int(current / finish), "%", y, end="\r", flush=True)
+            amount = copy.deepcopy(self.Amount)
+            source = copy.deepcopy(self.Source)
+            sourceAmount = copy.deepcopy(self.SourceAmount)
+            crew = copy.deepcopy(self.Crew)
+            partner = copy.deepcopy(self.Partner)
+            deposit = copy.deepcopy(self.Deposit)
+            depositAmount = copy.deepcopy(self.DepositAmount)
+            depositConfirmation = copy.deepcopy(self.DepositConfirmation)
+            print("Build Transaction Json from Database: ", int(current / finish), "%", y, end="\r", flush=True)
             
-            sqlCursor.execute(self.userMysqlString[1], y)
-            for x in sqlCursor:
-                user['firstName'] = x[0]
-            sqlCursor.execute(self.userMysqlString[2], y)
-            for x in sqlCursor:
-                user['lastName'] = x[0]
-            sqlCursor.execute(self.userMysqlString[3], y)
-            for x in sqlCursor:
-                user['mobilePhone'] = x[0]
-            sqlCursor.execute(self.userMysqlString[4], y)
-            for x in sqlCursor:
-                user['placeOfResidence'] = x[0]
-            sqlCursor.execute(self.userMysqlString[5], y)
-            for x in sqlCursor:
-                if x[0] != '':
-                    user['birthday'] = int(x[0])
-            sqlCursor.execute(self.userMysqlString[6], y)
-            for x in sqlCursor:
-                user['sex'] = x[0]
-            sqlCursor.execute(self.userMysqlString[7], y)
-            for x in sqlCursor:
-                id = x[0] 
-            sqlCursor.execute(self.userMysqlString[8], y)
-            uuid['id']=id
-            for z in sqlCursor:
-                user['email'] = z[0]
-            #result = self.ordered(user, self.UserOrder)
-            model['uuid'] = uuid
-            model['model'] = json.dumps(user)
-            userList.append(model)
+            # Set crew data
+            crew['name'] = crewIdList[y[0]]['name']
+            crew['uuid'] = crewIdList[y[0]]['drops_id']
+
+            # Set partner Data WHEN cash is 0
+            if y[7] == 0
+                partner['name'] = y[5]
+
+            sourceAmount['amount'] = y[1]
+
+            # Set Source
+            source['amount'] = sourceAmount
+
+            if y[2] == 'donations'
+                source['category'] = 'other'
+                source['norms'] = 'DONATION'
+            else
+                source['category'] = 'other_ec'
+                source['norms'] = 'ECONOMIC'
+
+            source['description'] = y[6]
+
+            # Set source type depending on cash
+            if y[7] == 0
+                source['typeOfSource']['category'] = 'extern'
+            else
+                source['typeOfSource']['category'] = 'cash'
+
+            # Set amount
+            amount['received'] = y[3] * 1000
+            amount['sources'].append(source)
+
+            amount['created'] = y[8] * 1000
+            amount['updated'] = y[8] * 1000
+
+            amount['crew'] = crew
+
+            amount['details']['description'] = y[4]
+
+            amount['details']['partner'] = partner
+            amount['details']['reasonForPayment'] = crew['name'][:3] + ' ' + y[4]         
+
+            # TODO Set deposit
+
+            deposit['created'] = y[8] * 1000
+            deposit['updated'] = y[8] * 1000
+            deposit['dateOfDeposit'] = y[8] * 1000
+
+            depositAmount['created'] = y[8] * 1000
+            depositAmount['amount'] = sourceAmount
+
+            deposit['amount'].append(depositAmount)
+
+            deposit['crew'] = crew
+
+            sourceAmount['amount'] = 0
+            deposit['full'] = sourceAmount
+
+            # TODO Set depositConfirmation
+
+            depositConfirmation['created'] = y[8] * 1000
+
+            # Set model
+
+            model['taking'] = amount
+            model['deposit'] = deposit
+            model['depositConfirmation'] = depositConfirmation
+
+            transactionList.append(model)
            # if testcount == 0:
             #    break
         print("\n")
-        return userList
-
-    def buildUserCrewList(self, userList, crewList):
-        userCrewList = []
-        finish = len(userList) / 100
-        current = 0
-        for x in userList:
-            current = current + 1
-            print("Build User Json from Database: ", int(current / finish), "%", end="\r", flush=True)
-            crewUser = copy.deepcopy(self.UserCrew)
-            if x['id'] != 0:
-                for y in crewList:
-                    if y['id'] == x['id']:
-                        crewUser['user'] = x['uuid']
-                        crewUser['crew'] = y['uuid']
-                        if 'pillar' in x:
-                            crewUser['pillar']=x['pillar']
-
-                        userCrewList.append(crewUser)
-                    else:
-                        continue
-            else:
-                continue
-        return userCrewList
-
+        return transactionList
 
 
 

@@ -11,19 +11,14 @@ def main():
     config = loadConfig()
     c = Converter(config)
     m = Migration()
-    crewList = c.crewConverter()
-    uuidCrewList = m.handleCrew(crewList)
-    print("CrewUUIDList done")
-    for x in uuidCrewList:
-        print(x)
-    userList = c.userConverter()
-    uuidUserList = m.handleUser(userList)
-    for x in uuidUserList:
-        print(x)
-    userCrewList = c.buildUserCrewList(uuidUserList, uuidCrewList)
-    for x in userCrewList:
-        print(x)
-    m.handleUserCrew(userCrewList)
+    transactionList = c.transactionConverter()
+    
+    print(transactionList)
+    #uuidtransactionList = m.handleTransaction(transactionList)
+    #print("TransactionUUIDList done")
+    #for x in uuidtransactionList:
+    #    print(x)
+
     #print(config)
     #print(crewList)
 
