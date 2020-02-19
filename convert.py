@@ -71,6 +71,14 @@ class Converter:
         "currency": "EUR"
     }
 
+    Exterrnal = {
+        "location": "",
+        "contactPerson": "",
+        "email": "",
+        "address": "",
+        "receipt": 0
+    }
+
     # Deposit models
 
     Deposit = {
@@ -163,6 +171,7 @@ class Converter:
             takingAmount = copy.deepcopy(self.TakingAmount)
             sourceAmount = copy.deepcopy(self.SourceAmount)
             depositSourceAmount = copy.deepcopy(self.SourceAmount)
+            external = copy.deepcopy(self.Exterrnal)
             crew = copy.deepcopy(self.Crew)
             partner = copy.deepcopy(self.Partner)
             deposit = copy.deepcopy(self.Deposit)
@@ -177,6 +186,9 @@ class Converter:
             # Set partner Data WHEN cash is 0
             if y[7] == 0:
                 partner['name'] = y[5]
+                partner['asp'] = ""
+                partner['email'] = ""
+                partner['address'] = ""
 
             print(y[1])
 
@@ -197,6 +209,8 @@ class Converter:
             # Set source type depending on cash
             if y[7] == 0:
                 source['typeOfSource']['category'] = 'extern'
+                external['location'] = y[5]
+                source['typeOfSource']['external'] = external
             else:
                 source['typeOfSource']['category'] = 'cash'
 
