@@ -148,6 +148,9 @@ class Converter:
 
         # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
         for y in transactionIdList:
+            print (y)
+            break
+
             current = current + 1
             model = copy.deepcopy(self.Model)
             amount = copy.deepcopy(self.Amount)
