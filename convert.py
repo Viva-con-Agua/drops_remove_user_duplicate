@@ -126,9 +126,7 @@ class Converter:
         sqlCursor = self.mydb.cursor()
         sqlCursor.execute(self.transactionMysqlString[1])
         for x in sqlCursor:
-            if x[1] not in crewIdList:
-                crewIdList[x[1]] = []
-            crewIdList[x[1]].append({ 'drops_id': x[0], 'name': x[2] })
+            crewIdList[x[1]] = { 'drops_id': x[0], 'name': x[2] }
         return crewIdList
 
     def ordered(self, d, desired_key_order):
