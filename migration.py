@@ -11,9 +11,9 @@ class Migration:
         self.pillar = data
         # edit the host to internel drops ip
         self.url = [
-            "http://stage.vivaconagua.org/backend/stream/takings/create",
-            "http://stage.vivaconagua.org/backend/stream/deposits/create",
-            "http://stage.vivaconagua.org/backend/stream/deposits/confirm"
+            "http://172.2.100.3:9000/backend/stream/takings/create",
+            "http://172.2.100.3:9000/backend/stream/deposits/create",
+            "http://172.2.100.3:9000/backend/stream/deposits/confirm"
         ]
     
     def handleTransaction(self, transactionList):
