@@ -183,7 +183,7 @@ class Converter:
             source['description'] = y[6]
 
             # Set source type depending on cash
-            if y[7] == 0
+            if y[7] == '0'
                 source['typeOfSource']['category'] = 'extern'
             else
                 source['typeOfSource']['category'] = 'cash'
