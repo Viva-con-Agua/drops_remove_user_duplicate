@@ -165,7 +165,7 @@ class Converter:
             crew['uuid'] = crewIdList[y[0]]['drops_id']
 
             # Set partner Data WHEN cash is 0
-            if y[7] == 0
+            if y[7] == '0'
                 partner['name'] = y[5]
 
             sourceAmount['amount'] = y[1]
