@@ -14,10 +14,10 @@ def main():
     transactionList = c.transactionConverter()
     
     #print(transactionList)
-    #uuidtransactionList = m.handleTransaction(transactionList)
-    #print("TransactionUUIDList done")
-    #for x in uuidtransactionList:
-    #    print(x)
+    uuidtransactionList = m.handleTransaction(transactionList)
+    print("TransactionUUIDList done")
+    for x in uuidtransactionList:
+        print(x)
 
 if __name__ == "__main__":
     main()
