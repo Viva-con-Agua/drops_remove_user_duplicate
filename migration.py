@@ -1,22 +1,26 @@
+# -*- coding: utf-8 -*-
 # Python-Script for migration Pool1-Database into the new Pool2 system
 from collections import OrderedDict
 import requests
 import json
 class Migration:
     
-    def __init__(self):
-        self.auth = {'client_id': 'migration', 'client_secret': 'migration', 'version': '1.1.0'}
-        with open('conf/asp.json') as f:
-            data = json.load(f)
-        self.pillar = data
+    def __init__(self, config):
+        self.config = config
+        self.auth = {'email': self.config['drops']['email'], 'password': self.config['drops']['password'], 'rememberMe': False}
+
         # edit the host to internel drops ip
         self.url = [
-            "http://172.2.100.3:9000/backend/stream/takings/create",
-            "http://172.2.100.3:9000/backend/stream/deposits/create",
-            "http://172.2.100.3:9000/backend/stream/deposits/confirm"
+            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/takings/create",
+            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/deposits/create",
+            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/deposits/confirm",
+            "http://" + self.config['connection']['drops'] + ":9000/drops/webapp/authenticate"
         ]
     
     def handleTransaction(self, transactionList):
+
+
+
         finish = len(transactionList) / 100
         uuidList = []
         current = 0
@@ -25,8 +29,14 @@ class Migration:
             print("Insert Transaction: ", int(current / finish), "%", end="\r", flush=True)
             headers = { 'Content-Type': 'application/json' }
 
+            s = requests.Session()
+            res = s.post(self.url[3], headers=headers, data=json.dumps(self.auth))
+            print(res.text)
+            exit()
+
             # TODO Add taking
-            r = requests.post(self.url[0], headers=headers, params=self.auth, data=json.dumps(x['taking']))
+            print(json.dumps(x['taking']))
+            r = requests.post(self.url[0], headers=headers, data=json.dumps(x['taking']))
             print(requests.Response())
             if r.status_code == 200:
                 # TODO Add deposit
@@ -40,13 +50,13 @@ class Migration:
                 print(body['id'])
 
                 if x['deposit'] != "":
-                    rD = requests.post(self.url[1], headers=headers, params=self.auth, data=x['deposit'])
+                    rD = requests.post(self.url[1], headers=headers, data=x['deposit'])
                     if rD.status_code == 200:
                         body = json.loads(rD.text)
                         x['depositConfirmation'] = body['id']
                         print(rD.text)
 
-                        rDc = requests.post(self.url[2], headers=headers, params=self.auth, data=x['depositConfirmation'])
+                        rDc = requests.post(self.url[2], headers=headers, data=x['depositConfirmation'])
                         if rDc.status_code == 200:
                             body = json.loads(rDc.text)
                             print(rDc.text)

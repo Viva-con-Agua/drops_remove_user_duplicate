@@ -1,7 +1,11 @@
 connection:
-    stream: 172.2.100.6
+    stream: 172.2.100.2
+    drops: 172.2.100.1
 mysql:
     host: 172.2.1.10
     user: root
     passwd: 'yes'
-    database: db175370026 
+    database: db175370026
+drops:
+    email: it@vivaconagua.org
+    password: vca1312

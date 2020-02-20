@@ -10,7 +10,7 @@ def loadConfig():
 def main():
     config = loadConfig()
     c = Converter(config)
-    m = Migration()
+    m = Migration(config)
     transactionList = c.transactionConverter()
     
     #print(transactionList)
