@@ -1,10 +1,10 @@
 connection:
-    host: 'http://172.2.20.2'
+    host: 'https://pool2.vivaconagua.org'
 mysql:
     host: 172.2.1.10
     user: root
-    passwd: root
+    passwd: 
     database: db175370026
 drops:
-    email: it@vivaconagua.org
-    password: vca1312
+    email: 
+    password: 
