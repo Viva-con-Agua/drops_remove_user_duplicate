@@ -24,6 +24,7 @@ class Migration:
         uuidList = []
         current = 0
 
+        headers = { 'Content-Type': 'application/json' }
         session = requests.session()
         resSession = session.post(self.url[3], headers=headers, data=json.dumps(self.auth), allow_redirects=True)
         print("Result drops authenticate: " + str(resSession.status_code) + ": " + resSession.text)
@@ -42,7 +43,6 @@ class Migration:
         for x in transactionList:
             current = current + 1
             print("Insert Transaction: ", int(current / finish), "%", end="\r", flush=True)
-            headers = { 'Content-Type': 'application/json' }
 
             if resStream.status_code != 200:
                 print("ERROR: Authentication failed:")
