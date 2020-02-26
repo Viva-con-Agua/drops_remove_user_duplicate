@@ -1,5 +1,5 @@
 connection:
-    host: 172.2.20.2
+    host: 'http://172.2.20.2'
 mysql:
     host: 172.2.1.10
     user: root

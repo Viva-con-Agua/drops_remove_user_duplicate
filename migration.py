@@ -11,11 +11,11 @@ class Migration:
 
         # edit the host to internel drops ip
         self.url = [
-            "http://" + self.config['connection']['host'] + "/backend/stream/takings/create",
-            "http://" + self.config['connection']['host'] + "/backend/stream/deposits/create",
-            "http://" + self.config['connection']['host'] + "/backend/stream/deposits/confirm",
-            "http://" + self.config['connection']['host'] + "/drops/webapp/authenticate",
-            "http://" + self.config['connection']['host'] + "/backend/stream/authenticate/drops?route=/backend/stream/identity&ajax=true",
+            self.config['connection']['host'] + "/backend/stream/takings/create",
+            self.config['connection']['host'] + "/backend/stream/deposits/create",
+            self.config['connection']['host'] + "/backend/stream/deposits/confirm",
+            self.config['connection']['host'] + "/drops/webapp/authenticate",
+            self.config['connection']['host'] + "/backend/stream/authenticate/drops?route=/backend/stream/identity&ajax=true",
         ]
     
     def handleTransaction(self, transactionList):
