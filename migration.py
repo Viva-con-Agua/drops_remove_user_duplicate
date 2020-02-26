@@ -11,15 +11,14 @@ class Migration:
 
         # edit the host to internel drops ip
         self.url = [
-            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/takings/create",
-            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/deposits/create",
-            "http://" + self.config['connection']['stream'] + ":9000/backend/stream/deposits/confirm",
-            "http://" + self.config['connection']['drops'] + ":9000/drops/webapp/authenticate"
+            "http://" + self.config['connection']['host'] + "/backend/stream/takings/create",
+            "http://" + self.config['connection']['host'] + "/backend/stream/deposits/create",
+            "http://" + self.config['connection']['host'] + "/backend/stream/deposits/confirm",
+            "http://" + self.config['connection']['host'] + "/drops/webapp/authenticate",
+            "http://" + self.config['connection']['host'] + "/backend/stream/authenticate/drops?route=/backend/stream/identity&ajax=true",
         ]
     
     def handleTransaction(self, transactionList):
-
-
 
         finish = len(transactionList) / 100
         uuidList = []
@@ -29,45 +28,57 @@ class Migration:
             print("Insert Transaction: ", int(current / finish), "%", end="\r", flush=True)
             headers = { 'Content-Type': 'application/json' }
 
-            s = requests.Session()
-            res = s.post(self.url[3], headers=headers, data=json.dumps(self.auth))
-            print(res.text)
-            exit()
+            session = requests.session()
+            resSession = session.post(self.url[3], headers=headers, data=json.dumps(self.auth), allow_redirects=True)
+            print("Result drops authenticate: " + str(resSession.status_code) + ": " + resSession.text)
+            #headers.update({'cookies': resSession.headers['Set-Cookie'] })
+
+
+            resStream = session.get(self.url[4])#, allow_redirects=True)
+            print("Result stream identity: ", str(resStream.status_code), ": ", resStream.text)
+            #headers = resSession.headers
+            #headers.update({'Cookie': resStream.headers['Set-Cookie'] })
+
+
+            session.headers.update({'Content-Type': 'application/json'})
+            session.headers.update({'X-Requested-With': 'XMLHttpRequest'})
+
+
+            if resStream.status_code != 200:
+                print("ERROR: Authentication failed:")
+                exit(0)
 
             # TODO Add taking
-            print(json.dumps(x['taking']))
-            r = requests.post(self.url[0], headers=headers, data=json.dumps(x['taking']))
-            print(requests.Response())
-            if r.status_code == 200:
+            resTaking = session.post(self.url[0], data=json.dumps(x['taking']))
+
+            if resTaking.status_code == 200:
                 # TODO Add deposit
-                print(r.text)
-                body = json.loads(r.text)
+                print(str(resTaking.status_code) + ": " + resTaking.text)
+                body = json.loads(resTaking.text)
 
-                uuidList.append(body['id'])
+                uuidList.append(body['data'][0]['id'])
 
-                x['deposit']['amount'][0]['takingId'] = body['id']
-                print(r.text)
-                print(body['id'])
+                x['deposit']['amount'][0]['takingId'] = body['data'][0]['id']
 
                 if x['deposit'] != "":
-                    rD = requests.post(self.url[1], headers=headers, data=x['deposit'])
+                    rD = session.post(self.url[1], data=json.dumps(x['deposit']))
                     if rD.status_code == 200:
                         body = json.loads(rD.text)
-                        x['depositConfirmation'] = body['id']
-                        print(rD.text)
+                        x['depositConfirmation']['id'] = body['data'][0]['publicId']
 
-                        rDc = requests.post(self.url[2], headers=headers, data=x['depositConfirmation'])
+                        print(x['depositConfirmation'])
+                        rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
                         if rDc.status_code == 200:
                             body = json.loads(rDc.text)
                             print(rDc.text)
                         else:
-                            print("status_code: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['taking'])
+                            print("ERROR CONFIRMING DEPOSIT: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['depositConfirmation'])
 
                     else:
-                        print("status_code: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['taking'])
+                        print("ERROR CREATING DEPOSIT: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['deposit'])
 
             else:
-                print("status_code: ", r.status_code, "status_msg: ", r.text, "model: ", x['taking'])
+                print("ERROR CREATING TAKING: ", resTaking.status_code, "status_msg: ", resTaking.text, "model: ", x['taking'])
         print("\n")
         return uuidList
     def ordered(self, d, desired_key_order):
