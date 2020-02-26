@@ -23,26 +23,26 @@ class Migration:
         finish = len(transactionList) / 100
         uuidList = []
         current = 0
+
+        session = requests.session()
+        resSession = session.post(self.url[3], headers=headers, data=json.dumps(self.auth), allow_redirects=True)
+        print("Result drops authenticate: " + str(resSession.status_code) + ": " + resSession.text)
+        #headers.update({'cookies': resSession.headers['Set-Cookie'] })
+
+
+        resStream = session.get(self.url[4])#, allow_redirects=True)
+        print("Result stream identity: ", str(resStream.status_code), ": ", resStream.text)
+        #headers = resSession.headers
+        #headers.update({'Cookie': resStream.headers['Set-Cookie'] })
+
+
+        session.headers.update({'Content-Type': 'application/json'})
+        session.headers.update({'X-Requested-With': 'XMLHttpRequest'})
+        
         for x in transactionList:
             current = current + 1
             print("Insert Transaction: ", int(current / finish), "%", end="\r", flush=True)
             headers = { 'Content-Type': 'application/json' }
-
-            session = requests.session()
-            resSession = session.post(self.url[3], headers=headers, data=json.dumps(self.auth), allow_redirects=True)
-            print("Result drops authenticate: " + str(resSession.status_code) + ": " + resSession.text)
-            #headers.update({'cookies': resSession.headers['Set-Cookie'] })
-
-
-            resStream = session.get(self.url[4])#, allow_redirects=True)
-            print("Result stream identity: ", str(resStream.status_code), ": ", resStream.text)
-            #headers = resSession.headers
-            #headers.update({'Cookie': resStream.headers['Set-Cookie'] })
-
-
-            session.headers.update({'Content-Type': 'application/json'})
-            session.headers.update({'X-Requested-With': 'XMLHttpRequest'})
-
 
             if resStream.status_code != 200:
                 print("ERROR: Authentication failed:")
