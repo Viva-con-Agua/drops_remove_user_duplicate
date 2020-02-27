@@ -188,7 +188,7 @@ class Converter:
                 partner['email'] = ""
                 partner['address'] = ""
 
-            sourceAmount['amount'] = float(y[1]) / 100
+            sourceAmount['amount'] = int(y[1])
 
             # Set Source
             source['amount'] = sourceAmount
@@ -200,12 +200,12 @@ class Converter:
                 source['category'] = 'other_ec'
                 source['norms'] = 'ECONOMIC'
 
-            source['description'] = y[6]
+            source['description'] = y[6][:255]
 
             # Set source type depending on cash
             if y[7] == 0:
                 source['typeOfSource']['category'] = 'extern'
-                external['location'] = y[5]
+                external['location'] = y[5][:36]
                 source['typeOfSource']['external'] = external
             else:
                 source['typeOfSource']['category'] = 'cash'
@@ -225,7 +225,7 @@ class Converter:
             amount['crew'].append(crew)
 
             amount['details']['partner'] = partner
-            amount['details']['reasonForPayment'] = crew['name'][:3].upper() + ' - ' + y[4].upper()         
+            amount['details']['reasonForPayment'] = str(crew['name'][:3].upper() + ' - ' + y[4].upper())[:255]
 
             # TODO Set deposit
 
