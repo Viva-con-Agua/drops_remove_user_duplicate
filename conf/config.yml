@@ -3,8 +3,8 @@ connection:
 mysql:
     host: 172.2.1.10
     user: root
-    passwd: 'yes'
+    passwd: 
     database: db175370026
 drops:
-    email: t.kaestle@vivaconagua.org
-    password: k9gtAffe!vca3586
+    email: 
+    password: 
