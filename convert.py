@@ -123,7 +123,7 @@ class Converter:
 
         # account_type == ['donations' || 'econ'] ; meta_1 == {DESCRIPTION} ; receipt_status == [] ; cash == [0 = external | 1 = cash], meta_4 == details of source
         self.transactionMysqlString = [
-            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer') AND entry_time > 1577036800",
+            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer')",
             "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id"
         ]
     
