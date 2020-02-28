@@ -220,7 +220,7 @@ class Converter:
             amount['created'] = int(y[8]) * 1000
             amount['updated'] = int(y[8]) * 1000
 
-            amount['context']['description'] = y[4]
+            amount['context']['description'] = y[4][:255]
 
             amount['crew'].append(crew)
 
