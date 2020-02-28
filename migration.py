@@ -60,7 +60,7 @@ class Migration:
 
                 x['deposit']['amount'][0]['takingId'] = body['data'][0]['id']
 
-                if int(x['taking']['created']) < 1577836800:
+                if int(x['taking']['created'] / 1000) < 1577836800:
                     rD = session.post(self.url[1], data=json.dumps(x['deposit']))
                     if rD.status_code == 200:
                         body = json.loads(rD.text)
