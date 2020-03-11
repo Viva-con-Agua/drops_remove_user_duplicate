@@ -1,5 +1,5 @@
 connection:
-    host: 'https://pool2.vivaconagua.org'
+    host: 'https://stage.vivaconagua.org'
 mysql:
     host: 172.2.1.10
     user: root

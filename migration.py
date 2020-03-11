@@ -53,24 +53,23 @@ class Migration:
 
             if resTaking.status_code == 200:
                 # TODO Add deposit
-                print(str(resTaking.status_code) + ": " + resTaking.text)
+                #print(str(resTaking.status_code) + ": " + resTaking.text)
                 body = json.loads(resTaking.text)
 
                 uuidList.append(body['data'][0]['id'])
 
-                x['deposit']['amount'][0]['takingId'] = body['data'][0]['id']
-
-                if x['deposit'] != "":
+                if int(x['taking']['created']) / 1000 < 1577836800:
+                    x['deposit']['amount'][0]['takingId'] = body['data'][0]['id']
                     rD = session.post(self.url[1], data=json.dumps(x['deposit']))
                     if rD.status_code == 200:
                         body = json.loads(rD.text)
                         x['depositConfirmation']['id'] = body['data'][0]['publicId']
 
-                        print(x['depositConfirmation'])
+                        #print(x['depositConfirmation'])
                         rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
                         if rDc.status_code == 200:
                             body = json.loads(rDc.text)
-                            print(rDc.text)
+                            #print(rDc.text)
                         else:
                             print("ERROR CONFIRMING DEPOSIT: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['depositConfirmation'])
 
