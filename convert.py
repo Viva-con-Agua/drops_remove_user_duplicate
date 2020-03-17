@@ -257,7 +257,7 @@ class Converter:
 
             depositAmount['created'] = int(y[8]) * 1000
             depositAmount['amount'] = sourceAmount
-            depositAmount['takingId'] = depositIdList[created]['drops_id']
+            depositAmount['takingId'] = depositIdList[createdDate]['drops_id']
 
             deposit['amount'].append(depositAmount)
 
