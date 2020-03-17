@@ -60,7 +60,7 @@ class Migration:
                     x['depositConfirmation']['id'] = body['data'][0]['publicId']
 
                     #print(x['depositConfirmation'])
-                    #rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
+                    rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
                     if rDc.status_code == 200:
                         body = json.loads(rDc.text)
                         #print(rDc.text)
