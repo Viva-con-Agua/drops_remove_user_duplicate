@@ -121,10 +121,18 @@ class Converter:
             database=self.config['mysql']['database']
         )
 
+        self.streamdb = mysql.connector.connect(
+            host=self.config['stream']['host'],
+            user=self.config['stream']['user'],
+            passwd=self.config['stream']['passwd'],
+            database=self.config['stream']['database']
+        )
+
         # account_type == ['donations' || 'econ'] ; meta_1 == {DESCRIPTION} ; receipt_status == [] ; cash == [0 = external | 1 = cash], meta_4 == details of source
         self.transactionMysqlString = [
-            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer')",
-            "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id"
+            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer') AND entry_time > 1577836800",
+            "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id",
+            "SELECT Taking.public_id, Taking.created, description FROM Taking LEFT JOIN Deposit_Unit ON Taking.id = Deposit_Unit.taking_id WHERE Taking.created > 1577836800000 AND Deposit_Unit.id is NULL AND comment = 'Migration from Pool1'",
         ]
     
     def transaction_list(self):
@@ -143,6 +151,14 @@ class Converter:
             crewIdList[x[1]] = { 'drops_id': str(uuid.UUID(x[0])), 'name': x[2] }
         return crewIdList
 
+    def deposit_data(self):
+        depositIdList = {}
+        sqlCursor = self.streamdb.cursor()
+        sqlCursor.execute(self.transactionMysqlString[2])
+        for x in sqlCursor:
+            depositIdList[x[1]] = { 'drops_id': x[0], 'name': x[2] }
+        return depositIdList
+
     def ordered(self, d, desired_key_order):
         return OrderedDict([(key, d[key]) for key in desired_key_order])
 
@@ -153,6 +169,8 @@ class Converter:
 
         crewIdList = self.crew_data()
 
+        depositIdList = self.deposit_data()
+
         # Get all transactions
         transactionIdList = self.transaction_list()
         transactionList = []
@@ -161,6 +179,10 @@ class Converter:
 
         # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
         for y in transactionIdList:
+
+            createdDate = int(y[8]) * 1000
+            if depositIdList.get(createdDate) == None:
+                continue
 
             current = current + 1
             model = copy.deepcopy(self.Model)
@@ -227,7 +249,7 @@ class Converter:
             amount['details']['partner'] = partner
             amount['details']['reasonForPayment'] = str(crew['name'][:3].upper() + ' - ' + y[4].upper())[:255]
 
-            # TODO Set deposit
+            # Set deposit
 
             deposit['created'] = int(y[8]) * 1000
             deposit['updated'] = int(y[8]) * 1000
@@ -235,6 +257,7 @@ class Converter:
 
             depositAmount['created'] = int(y[8]) * 1000
             depositAmount['amount'] = sourceAmount
+            depositAmount['takingId'] = depositIdList[created]['drops_id']
 
             deposit['amount'].append(depositAmount)
 
@@ -243,17 +266,15 @@ class Converter:
             depositSourceAmount['amount'] = 0
             deposit['full'] = sourceAmount
 
-            # TODO Set depositConfirmation
+            # Set depositConfirmation
 
             depositConfirmation['date'] = int(y[8]) * 1000
 
             # Set model
 
             model['taking'] = amount
-
-            if int(y[8]) < 1577836800:
-                model['deposit'] = deposit
-                model['depositConfirmation'] = depositConfirmation
+            model['deposit'] = deposit
+            model['depositConfirmation'] = depositConfirmation
 
             transactionList.append(model)
            # if testcount == 0:
