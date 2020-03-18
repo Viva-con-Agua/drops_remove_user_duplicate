@@ -193,13 +193,14 @@ class Converter:
                 role = supporterData[3]
                 pillar = supporterData[4]
 
-                role_sql = "= '" + role + "'"
-                if role == None:
-                    role_sql = "IS NULL" 
+                role_sql = "IS NULL" 
+                if role != None:
+                    role_sql = "= '" + role + "'"
 
-                pillar_sql = "= '" + pillar + "'"
-                if pillar == None:
-                    pillar_sql = "IS NULL"
+                
+                pillar_sql = "IS NULL"
+                if pillar != None:
+                    pillar_sql = "= '" + pillar + "'"
 
                 sqlCursor.execute(self.deleteMysqlString[8], supporter_id, crew_id, pillar, role, min_id)
 
