@@ -202,7 +202,7 @@ class Converter:
                 if pillar != None:
                     pillar_sql = "= '" + pillar + "'"
 
-                sqlCursor.execute(self.deleteMysqlString[8]%(supporter_id, crew_id, pillar, role, min_id))
+                sqlCursor.execute(self.deleteMysqlString[8]%(supporter_id, crew_id, pillar_sql, role_sql, min_id))
 
                 #self.mydb.commit()
                 self.mydb.rollback()
