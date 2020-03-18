@@ -1,15 +1,7 @@
 connection:
-    host: 'https://stage.vivaconagua.org'
+    host: 'http://172.2.10.2'
 mysql:
-    host: 172.2.1.10
-    user: root
-    passwd: 
-    database: db175370026
-stream:
-    host: 172.2.200.2
-    user: stream
-    passwd:
-    database: stream
-drops:
-    email: 
-    password: 
+    host: 172.2.200.1
+    user: drops
+    passwd: drops
+    database: drops

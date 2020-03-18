@@ -7,27 +7,19 @@ First you need edit the `conf/config.yml` for the database connection:
 
 ```
 connection:
-    stream: 172.2.200.3
+    host: 'http://172.2.10.2'
 mysql:
-    host: 172.2.1.10
-    user: root
-    passwd: root
-    database: db175370026 
+    host: 172.2.200.1
+    user: drops
+    passwd: 
+    database: drops
 
 ```
-Next you need to edit the rest url in `migration.py`:
 
-```
-        self.url = [
-            "http://172.2.100.3:9000/backend/stream/takings/create",
-            "http://172.2.100.3:9000/backend/stream/deposits/create",
-            "http://172.2.100.3:9000/backend/stream/deposits/confirm"
-        ]
-```
 Final run:
 
 ```
-  pip install -r requirements.txt
+  # pip install -r requirements.txt
   python main.py
 
 ```
