@@ -127,6 +127,9 @@ class Converter:
            # if testcount == 0:
             #    break
 
+
+        print("\n")
+
         current = 0
         finish = len(transactionList) / 100
 
@@ -173,6 +176,8 @@ class Converter:
                 # if testcount == 0:
                 #    break
 
+        print("\n")
+        
         # TODO Cleanup Supporter_Crew
         supporterIdList = self.supporter_crew_list()
         supporterList = []
