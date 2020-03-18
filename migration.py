@@ -36,6 +36,9 @@ class Migration:
         #headers = resSession.headers
         #headers.update({'Cookie': resStream.headers['Set-Cookie'] })
 
+        if resStream.status_code != 200:
+            print("ERROR: Authentication failed:")
+            exit(0)
 
         session.headers.update({'Content-Type': 'application/json'})
         session.headers.update({'X-Requested-With': 'XMLHttpRequest'})
@@ -44,41 +47,29 @@ class Migration:
             current = current + 1
             print("Insert Transaction: ", int(current / finish), "%", end="\r", flush=True)
 
-            if resStream.status_code != 200:
-                print("ERROR: Authentication failed:")
-                exit(0)
+            # Add deposit
+            #print(str(resTaking.status_code) + ": " + resTaking.text)
 
-            # TODO Add taking
-            resTaking = session.post(self.url[0], data=json.dumps(x['taking']))
+            rD = session.post(self.url[1], data=json.dumps(x['deposit']))
 
-            if resTaking.status_code == 200:
-                # TODO Add deposit
-                print(str(resTaking.status_code) + ": " + resTaking.text)
-                body = json.loads(resTaking.text)
+            if rD.status_code == 200:
 
-                uuidList.append(body['data'][0]['id'])
+                # If taking before 1580428800 (31st of january 2020) add confirmation
+                if int(x['taking']['created']) / 1000 < 1580428800:
+                    body = json.loads(rD.text)
+                    x['depositConfirmation']['id'] = body['data'][0]['publicId']
 
-                x['deposit']['amount'][0]['takingId'] = body['data'][0]['id']
-
-                if x['deposit'] != "":
-                    rD = session.post(self.url[1], data=json.dumps(x['deposit']))
-                    if rD.status_code == 200:
-                        body = json.loads(rD.text)
-                        x['depositConfirmation']['id'] = body['data'][0]['publicId']
-
-                        print(x['depositConfirmation'])
-                        rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
-                        if rDc.status_code == 200:
-                            body = json.loads(rDc.text)
-                            print(rDc.text)
-                        else:
-                            print("ERROR CONFIRMING DEPOSIT: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['depositConfirmation'])
-
+                    #print(x['depositConfirmation'])
+                    rDc = session.post(self.url[2], data=json.dumps(x['depositConfirmation']))
+                    if rDc.status_code == 200:
+                        body = json.loads(rDc.text)
+                        #print(rDc.text)
                     else:
-                        print("ERROR CREATING DEPOSIT: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['deposit'])
+                        print("ERROR CONFIRMING DEPOSIT: ", rDc.status_code, "status_msg: ", rDc.text, "transaction: ", x['depositConfirmation'])
 
             else:
-                print("ERROR CREATING TAKING: ", resTaking.status_code, "status_msg: ", resTaking.text, "model: ", x['taking'])
+                print("ERROR CREATING DEPOSIT: ", rD.status_code, "status_msg: ", rD.text, "transaction: ", x['deposit'])
+
         print("\n")
         return uuidList
     def ordered(self, d, desired_key_order):

@@ -7,108 +7,22 @@ from collections import OrderedDict
 
 class Converter:
 
-    # Takings models including taking, deposit and deposit confirmation details
+    # User to be deleted including user_id and profile_id
 
     Model = {
-        'taking': '',
-        'deposit': '',
-        'depositConfirmation': ''
+        'user_ids': '',
+        'profile_ids': '',
+        'supporter_ids': '',
+        'token_ids': ''
     }
 
-    # Transaction models
-    
-    Amount = {
-        'amount': '',
-        'author': '58c8e525-8d50-41ab-9725-d318891c92db',
-        'comment': 'Migration from Pool1',
-        "description": "", 
-        'context': {
-            "category": "other",
-            "description": "" # meta_1
-        },
-        'created': '', # entry_time * 1000 
-        'crew': [],
-        'depositUnits': [],
-        'details': {
-            'partner': {}, # when cash == 0 its field
-            "reasonForPayment": "", # name substr(0,3) + " - " meta_1  
-            'receipt': False
-        },
-        'updated': '' # entry_time * 1000 
+    CrewData = {
+        'min_id': '',
+        'supporter_id': '',
+        'crew_id': '',
+        'role': '',
+        'pillar': ''
     }
-
-    Source = {
-        "amount": "",
-        "category": "", # when account_type == 'donations' its other else other_ec
-        "desc": True,
-        "description": "", # meta_4  
-        "norms": "", # # when account_type == 'donations' its DONATION else ECONOMIC
-        "typeOfSource": {
-            "category": "" # when cash == 0 its "extern", else "cash"
-        }
-    }
-
-    Partner = {
-        # SET "name" = meta_3 # when cash == 0
-    }
-
-    Crew = {
-        "name": "", # name
-        "uuid": "" # handled drops_id
-    }
-
-    TakingAmount = {
-        'involvedSupporter': [{
-            'name': 'Tobias Kästle',
-            'uuid': '58c8e525-8d50-41ab-9725-d318891c92db'
-        }],
-        'received': '', # transaction_date * 1000
-        'sources': []
-    }
-
-    SourceAmount = {
-        "amount": '', # amount / 100
-        "currency": "EUR"
-    }
-
-    Exterrnal = {
-        "location": "",
-        "contactPerson": "",
-        "email": "",
-        "address": "",
-        "receipt": False
-    }
-
-    # Deposit models
-
-    Deposit = {
-        "amount": [], # DepositAmount
-        "created": "", # entry_time * 1000 
-        "crew": "", # Crew
-        "dateOfDeposit": "", # entry_time * 1000
-        "depositUnits": [],
-        "full": "", # SourceAmount with 0 EUR,
-        "supporter": {
-            "name": "Tobias Kästle",
-            "uuid": "58c8e525-8d50-41ab-9725-d318891c92db"
-        },
-        "updated": ""
-    }
-
-    DepositAmount = {
-        "amount": "", # SourceAmount
-        "created": "", # entry_time * 1000
-        "takingId": "" # !IMPORTANT FILL FROM THE RESPONSE OF TAKING CREATE AND ADD TAKING ID 
-    }
-
-    # Deposit confirmation models
-
-    DepositConfirmation = {
-        "date": "", # entry_time * 1000
-        "id": "", # !IMPORTANT FILL FROM THE RESPONSE OF DEPOSIT CREATE AND ADD DEPOSIT ID 
-        "name": "Tobias Kästle",
-        "uuid": "58c8e525-8d50-41ab-9725-d318891c92db"
-      }
     
     def __init__(self, config): 
 
@@ -121,10 +35,29 @@ class Converter:
             database=self.config['mysql']['database']
         )
 
-        # account_type == ['donations' || 'econ'] ; meta_1 == {DESCRIPTION} ; receipt_status == [] ; cash == [0 = external | 1 = cash], meta_4 == details of source
+        # 0 email
+        # 1 min id
+        # 2 id list
+        # 3 count
         self.transactionMysqlString = [
-            "SELECT city_id, amount, account_type, transaction_date, meta_1, meta_3, meta_4, cash, entry_time FROM wp_vca_asm_finances_transactions WHERE transaction_type NOT IN ('expenditure', 'transfer')",
-            "SELECT drops_id, geography_id, name FROM wp_vca_asm_geography_mapping, wp_vca_asm_geography WHERE geography_id = id"
+            # GET ALL DUPLICATED USERS
+            "SELECT email, MIN(id) AS min_id, GROUP_CONCAT(id ORDER BY id) AS id_list, COUNT(*) AS cnt FROM Profile GROUP BY email HAVING cnt > 1 ORDER BY min_id",
+            "SELECT GROUP_CONCAT(id) FROM Supporter WHERE profile_id IN (%s)",
+            "SELECT GROUP_CONCAT(id) FROM User WHERE id IN (SELECT user_id FROM Profile WHERE Profile.id IN (%s))",
+            "SELECT GROUP_CONCAT(OauthToken.id) as id_list FROM OauthToken INNER JOIN User ON HEX(public_id) = HEX(user_id) WHERE User.id IN (%s);",
+            "SELECT MIN(id) AS id, supporter_id, crew_id, role, pillar, COUNT(*) AS cnt FROM Supporter_Crew GROUP BY supporter_id, crew_id, role, pillar HAVING cnt > 1"
+        ]
+
+        self.deleteMysqlString = [
+            "DELETE FROM Supporter_Crew WHERE supporter_id IN(%s)",
+            "DELETE FROM Address WHERE supporter_id IN(%s)",
+            "DELETE FROM Supporter WHERE id IN(%s)",
+            "DELETE FROM LoginInfo WHERE profile_id IN(%s)",
+            "DELETE FROM PasswordInfo WHERE profile_id IN(%s)",
+            "DELETE FROM Profile WHERE id IN(%s)",
+            "DELETE FROM OauthToken WHERE id IN (%s)",
+            "DELETE FROM User WHERE id IN(%s);",
+            "DELETE FROM Supporter_Crew WHERE supporter_id = %s AND crew_id = %s AND pillar %s AND role %s AND id != %s"
         ]
     
     def transaction_list(self):
@@ -135,13 +68,13 @@ class Converter:
             transactionIdList.append(x)
         return transactionIdList
 
-    def crew_data(self):
-        crewIdList = {}
+    def supporter_crew_list(self):
         sqlCursor = self.mydb.cursor()
-        sqlCursor.execute(self.transactionMysqlString[1])
+        supporterIdList = []
+        sqlCursor.execute(self.transactionMysqlString[4])
         for x in sqlCursor:
-            crewIdList[x[1]] = { 'drops_id': str(uuid.UUID(x[0])), 'name': x[2] }
-        return crewIdList
+            supporterIdList.append(x)
+        return supporterIdList
 
     def ordered(self, d, desired_key_order):
         return OrderedDict([(key, d[key]) for key in desired_key_order])
@@ -151,113 +84,132 @@ class Converter:
 
         sqlCursor = self.mydb.cursor()
 
-        crewIdList = self.crew_data()
-
         # Get all transactions
         transactionIdList = self.transaction_list()
         transactionList = []
         finish = len(transactionIdList) / 100
         current = 0
 
-        # y >> [0] = city_id, [1] = amount, [2] = account_type, [3] = transaction_date, [4] = meta_1, [5] = meta_3, [6] = meta_4, [7] = cash, [8] = entry_time
-        for y in transactionIdList:
+        for rawData in transactionIdList:
 
             current = current + 1
             model = copy.deepcopy(self.Model)
-            amount = copy.deepcopy(self.Amount)
-            source = copy.deepcopy(self.Source)
-            takingAmount = copy.deepcopy(self.TakingAmount)
-            sourceAmount = copy.deepcopy(self.SourceAmount)
-            depositSourceAmount = copy.deepcopy(self.SourceAmount)
-            external = copy.deepcopy(self.Exterrnal)
-            crew = copy.deepcopy(self.Crew)
-            partner = copy.deepcopy(self.Partner)
-            deposit = copy.deepcopy(self.Deposit)
-            depositAmount = copy.deepcopy(self.DepositAmount)
-            depositConfirmation = copy.deepcopy(self.DepositConfirmation)
-            print("Build Transaction Json from Database: ", int(current / finish), "%", y, end="\r", flush=True)
+           
+            #print("Build List from Database: ", int(current / finish), "%", rawData, end="\r", flush=True)
+
+            email = rawData[0]
+            min_id = rawData[1]
+            id_list = rawData[2]
+            count = rawData[3]
+
+            id_list = id_list.replace(str(min_id) + ",", "")
+
+            model['profile_ids'] = id_list
+            # GET Supporter ids
+
+            sqlCursor.execute(self.transactionMysqlString[1]%(id_list))
+            for x in sqlCursor:
+                model['supporter_ids'] = x[0]
+
+
+            # GET User ids
+            sqlCursor.execute(self.transactionMysqlString[2]%(id_list))
+            for x in sqlCursor:
+                model['user_ids'] = x[0]
+
+            # GET Token ids
+            sqlCursor.execute(self.transactionMysqlString[3]%(model['user_ids']))
+            for x in sqlCursor:
+                model['token_ids'] = x[0]
             
-            # Set crew data
-            crew['name'] = crewIdList[y[0]]['name']
-            crew['uuid'] = crewIdList[y[0]]['drops_id']
-
-            # Set partner Data WHEN cash is 0
-            if y[7] == 0:
-                partner['name'] = y[5]
-                partner['asp'] = ""
-                partner['email'] = ""
-                partner['address'] = ""
-
-            sourceAmount['amount'] = float(y[1]) / 100
-
-            # Set Source
-            source['amount'] = sourceAmount
-
-            if y[2] == 'donations':
-                source['category'] = 'other'
-                source['norms'] = 'DONATION'
-            else:
-                source['category'] = 'other_ec'
-                source['norms'] = 'ECONOMIC'
-
-            source['description'] = y[6]
-
-            # Set source type depending on cash
-            if y[7] == 0:
-                source['typeOfSource']['category'] = 'extern'
-                external['location'] = y[5]
-                source['typeOfSource']['external'] = external
-            else:
-                source['typeOfSource']['category'] = 'cash'
-
-            # Set taking amount
-            takingAmount['received'] = int(y[3]) * 1000
-            takingAmount['sources'].append(source)
-
-            amount['amount'] = takingAmount
-
-            # Set amount
-            amount['created'] = int(y[8]) * 1000
-            amount['updated'] = int(y[8]) * 1000
-
-            amount['context']['description'] = y[4]
-
-            amount['crew'].append(crew)
-
-            amount['details']['partner'] = partner
-            amount['details']['reasonForPayment'] = crew['name'][:3].upper() + ' - ' + y[4].upper()         
-
-            # TODO Set deposit
-
-            deposit['created'] = int(y[8]) * 1000
-            deposit['updated'] = int(y[8]) * 1000
-            deposit['dateOfDeposit'] = int(y[8]) * 1000
-
-            depositAmount['created'] = int(y[8]) * 1000
-            depositAmount['amount'] = sourceAmount
-
-            deposit['amount'].append(depositAmount)
-
-            deposit['crew'] = crew
-
-            depositSourceAmount['amount'] = 0
-            deposit['full'] = sourceAmount
-
-            # TODO Set depositConfirmation
-
-            depositConfirmation['date'] = int(y[8]) * 1000
-
-            # Set model
-
-            model['taking'] = amount
-
-            if int(y[8]) < 1577836800:
-                model['deposit'] = deposit
-                model['depositConfirmation'] = depositConfirmation
-
+            print(model)
             transactionList.append(model)
            # if testcount == 0:
             #    break
+
+        current = 0
+        finish = len(transactionList) / 100
+
+        self.mydb.autocommit = False
+        sqlCursor = self.mydb.cursor()
+
+        for user in transactionList:
+
+            print("DELETE User FROM Database: ", int(current / finish), "%", user, end="\r", flush=True)
+            current = current + 1
+            try:
+                # delete supporter_crew
+                sqlCursor.execute(self.deleteMysqlString[0]%(user['supporter_ids']))
+
+                # delete supporter address
+                sqlCursor.execute(self.deleteMysqlString[1]%(user['supporter_ids']))
+
+                # delete supporter
+                sqlCursor.execute(self.deleteMysqlString[2]%(user['supporter_ids']))
+
+                # delete login_info
+                sqlCursor.execute(self.deleteMysqlString[3]%(user['profile_ids']))
+
+                # delete password_info
+                sqlCursor.execute(self.deleteMysqlString[4]%(user['profile_ids']))
+
+                # delete profiles
+                sqlCursor.execute(self.deleteMysqlString[5]%(user['profile_ids']))
+
+                if user['token_ids'] != None:
+                    # delete oauthtoken if exists
+                    sqlCursor.execute(self.deleteMysqlString[6]%(user['token_ids']))
+
+                # delete user
+                sqlCursor.execute(self.deleteMysqlString[7]%(user['user_ids']))
+
+                #self.mydb.commit()
+                self.mydb.rollback()
+
+            except mysql.connector.Error as error :
+                print("Failed to delete record (" + user['profile_ids'] + ") to database rollback: {}".format(error))
+                self.mydb.rollback()
+
+                # if testcount == 0:
+                #    break
+
+        # TODO Cleanup Supporter_Crew
+        supporterIdList = self.supporter_crew_list()
+        supporterList = []
+        finish = len(supporterIdList) / 100
+        current = 0
+
+        for supporterData in supporterIdList:
+
+            current = current + 1
+           
+            print("DELETE Supporter_Crew FROM Database: ", int(current / finish), "%", supporterData, end="\r", flush=True)
+
+            try:
+
+                min_id = supporterData[0]
+                supporter_id = supporterData[1]
+                crew_id = supporterData[2]
+                role = supporterData[3]
+                pillar = supporterData[4]
+
+                role_sql = "= '" + role + "'"
+                if role == None:
+                    role_sql = "IS NULL" 
+
+                pillar_sql = "= '" + pillar + "'"
+                if pillar == None:
+                    pillar_sql = "IS NULL"
+
+                sqlCursor.execute(self.deleteMysqlString[8], supporter_id, crew_id, pillar, role, min_id)
+
+                #self.mydb.commit()
+                self.mydb.rollback()
+
+            except mysql.connector.Error as error :
+                print("Failed to delete record to database rollback: {}".format(error))
+                self.mydb.rollback()
+
         print("\n")
         return transactionList
 
